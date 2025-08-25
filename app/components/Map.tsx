@@ -3,10 +3,10 @@
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
-import { FavoriteLocation, MapProps } from "./types";
-import { projectLatLngToScreenCoordinates } from "./utils";
+import { FAVORITE_LOCATIONS } from "./favourite-locations";
+import { MapProps } from "./types";
+import { clusterByDistance } from "./utils";
 
-// Fix for default markers in Leaflet with Next.js
 delete (
   L.Icon.Default.prototype as typeof L.Icon.Default.prototype & {
     _getIconUrl?: () => void;
@@ -21,89 +21,28 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const favoriteLocations: FavoriteLocation[] = [
-  {
-    name: "Central Park",
-    coordinates: [40.7829, -73.9654],
-    description: "843-acre park in Manhattan, perfect for walks and picnics",
-    category: "Park",
-  },
-  {
-    name: "Statue of Liberty",
-    coordinates: [40.6892, -74.0445],
-    description: "Iconic symbol of freedom and democracy",
-    category: "Monument",
-  },
-  {
-    name: "Times Square",
-    coordinates: [40.758, -73.9855],
-    description:
-      "The bustling heart of NYC with bright lights and Broadway shows",
-    category: "Entertainment",
-  },
-  {
-    name: "Brooklyn Bridge",
-    coordinates: [40.7061, -73.9969],
-    description: "Historic suspension bridge connecting Manhattan and Brooklyn",
-    category: "Bridge",
-  },
-  {
-    name: "Empire State Building",
-    coordinates: [40.7484, -73.9857],
-    description: "Iconic Art Deco skyscraper with stunning city views",
-    category: "Architecture",
-  },
-  {
-    name: "9/11 Memorial",
-    coordinates: [40.7115, -74.0134],
-    description: "Moving tribute to those lost in the September 11 attacks",
-    category: "Memorial",
-  },
-  {
-    name: "High Line",
-    coordinates: [40.748, -74.0048],
-    description: "Elevated linear park built on former railway tracks",
-    category: "Park",
-  },
-  {
-    name: "One World Observatory",
-    coordinates: [40.7127, -74.0134],
-    description: "Breathtaking views from the tallest building in NYC",
-    category: "Observatory",
-  },
-];
-
 export default function Map({
   width = "100%",
   height = "400px",
   center = [40.7128, -74.006], // NYC coordinates as default
   zoom = 13,
-  showFavorites = true,
-  enableCollisionDetection = true,
 }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
 
-  useEffect(() => {
-    if (!mapRef.current) return;
+  const createIcon = (count: number) => {
+    const isCluster = count > 1;
+    const size = isCluster ? Math.min(40 + Math.log(count) * 5, 60) : 30;
 
-    // Initialize the map
-    leafletMapRef.current = L.map(mapRef.current).setView(center, zoom);
-
-    // Add tile layer (OpenStreetMap)
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(leafletMapRef.current);
-
-    const favoriteIcon = L.divIcon({
+    return L.divIcon({
       html: `
         <div style="
-          background-color: #ef4444;
+          background-color: ${isCluster ? "#3b82f6" : "#ef4444"};
           border: 2px solid white;
           border-radius: 50%;
-          width: 30px;
-          height: 30px;
+          width: ${size}px;
+          height: ${size}px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -111,18 +50,97 @@ export default function Map({
         ">
           <span style="
             color: white;
-            font-size: 16px;
+            font-size: ${isCluster ? Math.min(14 + Math.log(count), 16) : 16}px;
             font-weight: bold;
-          ">⭐</span>
+          ">${isCluster ? count : "⭐"}</span>
         </div>
       `,
-      className: "custom-favorite-icon",
-      iconSize: [30, 30],
-      iconAnchor: [15, 15],
-      popupAnchor: [0, -15],
+      className: isCluster ? "custom-cluster-icon" : "custom-favorite-icon",
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
+      popupAnchor: [0, -size / 2],
     });
+  };
+  const updateMarkers = () => {
+    if (!leafletMapRef.current || !markersLayerRef.current) return;
 
-    // Add a welcome marker at the center
+    const currentZoom = leafletMapRef.current.getZoom();
+
+    markersLayerRef.current.clearLayers();
+
+    const cellSize = currentZoom <= 10 ? 100 : currentZoom <= 12 ? 60 : 30;
+
+    const clusters = clusterByDistance(
+      FAVORITE_LOCATIONS,
+      currentZoom,
+      cellSize,
+      leafletMapRef.current
+    );
+
+    clusters.forEach((cluster) => {
+      const markerCount = cluster.markers.length;
+      const icon = createIcon(markerCount);
+
+      let representative = cluster.markers[0];
+
+      let popupContent;
+      if (markerCount === 1) {
+        popupContent = `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
+              ${representative.name}
+            </h3>
+            <p style="margin: 0; font-size: 14px; color: #4b5563;">
+              ${representative.description}
+            </p>
+            <div style="margin-top: 8px; padding: 4px 8px; background-color: #f3f4f6; border-radius: 4px; font-size: 12px; color: #6b7280;">
+              Category: ${representative.category}
+            </div>
+          </div>
+        `;
+      } else {
+        const locationsList = cluster.markers
+          .map(
+            (loc) =>
+              `<li style="margin: 4px 0;"><strong>${loc.name}</strong> - ${loc.category}</li>`
+          )
+          .join("");
+
+        popupContent = `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
+              ${markerCount} Locations in This Area
+            </h3>
+            <ul style="margin: 8px 0; padding-left: 16px; font-size: 14px; color: #4b5563;">
+              ${locationsList}
+            </ul>
+            <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af; font-style: italic;">
+              Zoom in to see individual markers
+            </p>
+          </div>
+        `;
+
+        representative = cluster.centroid;
+      }
+
+      L.marker([representative.lat, representative.lng], { icon })
+        .addTo(markersLayerRef.current!)
+        .bindPopup(popupContent);
+    });
+  };
+
+  useEffect(() => {
+    if (!mapRef || !mapRef.current) return;
+
+    leafletMapRef.current = L.map(mapRef.current).setView(center, zoom);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution:
+        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    }).addTo(leafletMapRef.current);
+
+    markersLayerRef.current = L.layerGroup().addTo(leafletMapRef.current);
+
     L.marker(center)
       .addTo(leafletMapRef.current)
       .bindPopup(
@@ -132,37 +150,31 @@ export default function Map({
             🗽 Welcome to NYC!
           </h3>
           <p style="margin: 0; font-size: 14px; color: #4b5563;">
-            Click the ⭐ markers to explore favorite places around the city!
+            Click the markers to explore favorite places around the city!
+          </p>
+          <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
+            Zoom in and out to see clustering in action
           </p>
         </div>
       `
       )
       .openPopup();
 
-    // Add event listeners for map events
-    leafletMapRef.current.on("zoomlevelschange", (e) => {
-      const point = projectLatLngToScreenCoordinates(
-        favoriteLocations[0].coordinates[0],
-        favoriteLocations[0].coordinates[1],
-        leafletMapRef.current!
-      );
-      console.log(point);
-    });
+    updateMarkers();
 
-    // Cleanup function
+    leafletMapRef.current.on("zoomend", updateMarkers);
+
     return () => {
       if (leafletMapRef.current) {
-        // Remove event listeners
-        leafletMapRef.current.off("zoomlevelschange");
         leafletMapRef.current.off("zoomend");
-        leafletMapRef.current.off("moveend");
-
-        // Remove the map
         leafletMapRef.current.remove();
         leafletMapRef.current = null;
       }
+      if (markersLayerRef.current) {
+        markersLayerRef.current = null;
+      }
     };
-  }, [center, zoom, showFavorites, enableCollisionDetection]);
+  }, [center, zoom, width, height]);
 
   return (
     <div

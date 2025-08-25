@@ -39,8 +39,6 @@ export default function Home() {
               height="500px"
               center={[40.7128, -74.006]}
               zoom={12}
-              showFavorites={true}
-              enableCollisionDetection={true}
             />
           </div>
 
@@ -59,19 +57,6 @@ export default function Home() {
                 <li>• Responsive design</li>
                 <li>• TypeScript support</li>
               </ul>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Quick Start
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 text-sm">
-                This Leaflet map showcases popular NYC attractions with ⭐ star
-                markers and smart collision detection. The custom algorithm
-                automatically adjusts marker positions to prevent overlapping
-                while maintaining readability. Check your browser console to see
-                collision detection results!
-              </p>
             </div>
           </div>
         </main>

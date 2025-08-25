@@ -1,8 +1,9 @@
 export interface FavoriteLocation {
-  name: string;
-  coordinates: [number, number];
-  description: string;
-  category: string;
+  name?: string;
+  lat: number;
+  lng: number;
+  description?: string;
+  category?: string;
 }
 
 export interface MarkerPosition {
@@ -10,6 +11,7 @@ export interface MarkerPosition {
   pixelPosition: { x: number; y: number };
   offsetPosition?: { x: number; y: number };
   marker?: L.Marker;
+  centroid?: { x: number; y: number };
 }
 
 export interface MapProps {
@@ -17,6 +19,4 @@ export interface MapProps {
   height?: string;
   center?: [number, number];
   zoom?: number;
-  showFavorites?: boolean;
-  enableCollisionDetection?: boolean;
 }
