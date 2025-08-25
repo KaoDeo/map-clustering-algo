@@ -110,9 +110,6 @@ export default function Home() {
           </div>
 
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
-              Live Demo - Distance-Based Clustering
-            </h2>
             <MyAwesomeMap
               height="500px"
               center={[40.7128, -74.006]}
