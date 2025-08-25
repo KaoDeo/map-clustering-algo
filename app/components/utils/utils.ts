@@ -1,10 +1,9 @@
-import { FavoriteLocation } from "../types";
-import L from "leaflet";
+import { Marker } from "../types";
 
 /*
  get centroid of cluster
  */
-export const getCentroid = (markers: FavoriteLocation[]) => {
+export const getCentroid = (markers: Marker[]) => {
   const lat = markers.reduce((sum, m) => sum + m.lat, 0) / markers.length;
   const lng = markers.reduce((sum, m) => sum + m.lng, 0) / markers.length;
   return { lat, lng };
@@ -16,9 +15,9 @@ export const getCentroid = (markers: FavoriteLocation[]) => {
 export const projectLatLngToPixelPositions = (
   lat: number,
   lng: number,
-  map: L.Map
+  map: any
 ): { x: number; y: number } => {
-  const point = map.latLngToLayerPoint(L.latLng(lat, lng));
+  const point = map.latLngToLayerPoint(map.latLng(lat, lng));
   return { x: point.x, y: point.y };
 };
 

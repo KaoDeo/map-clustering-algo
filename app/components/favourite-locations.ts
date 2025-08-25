@@ -1,6 +1,6 @@
-import { FavoriteLocation } from "./types";
+import { Marker } from "./types";
 
-export const FAVORITE_LOCATIONS: FavoriteLocation[] = [
+export const FAVORITE_LOCATIONS: Marker[] = [
   {
     name: "Central Park",
     lat: 40.7829,

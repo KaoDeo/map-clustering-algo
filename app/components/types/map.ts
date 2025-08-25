@@ -1,4 +1,7 @@
-export interface FavoriteLocation {
+import L from "leaflet";
+import { Cluster } from "./cluster";
+
+export interface Marker {
   name?: string;
   lat: number;
   lng: number;
@@ -6,17 +9,15 @@ export interface FavoriteLocation {
   category?: string;
 }
 
-export interface MarkerPosition {
-  location: FavoriteLocation;
-  pixelPosition: { x: number; y: number };
-  offsetPosition?: { x: number; y: number };
-  marker?: L.Marker;
-  centroid?: { x: number; y: number };
-}
-
 export interface MapProps {
   width?: string;
   height?: string;
   center?: [number, number];
   zoom?: number;
+  mergeStrategy?: (
+    markers: Marker[],
+    zoom: number,
+    size: number,
+    map: L.Map
+  ) => Cluster[];
 }

@@ -1,19 +1,13 @@
-import { FavoriteLocation } from "../types";
-import L from "leaflet";
+import { Cluster, Marker } from "../types";
 import { getCentroid } from "./utils";
 
 export function clusterByDistance(
-  markers: FavoriteLocation[],
+  markers: Marker[],
   zoom: number,
   distanceThreshold = 5,
-  map: L.Map
-) {
-  const clusters: {
-    x: number;
-    y: number;
-    markers: FavoriteLocation[];
-    centroid: { lat: number; lng: number };
-  }[] = [];
+  map: any
+): Cluster[] {
+  const clusters: Cluster[] = [];
 
   const points = markers.map((m) => ({
     marker: m,
@@ -49,5 +43,6 @@ export function clusterByDistance(
     clusters.push(cluster);
   }
 
+  console.log(clusters);
   return clusters;
 }

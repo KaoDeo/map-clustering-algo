@@ -4,7 +4,7 @@ import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useRef } from "react";
 import { FAVORITE_LOCATIONS } from "./favourite-locations";
-import { MapProps } from "./types";
+import { MapProps, mergeStrategies } from "./types";
 import { clusterByDistance } from "./utils";
 
 delete (
@@ -26,6 +26,7 @@ export default function Map({
   height = "400px",
   center = [40.7128, -74.006], // NYC coordinates as default
   zoom = 13,
+  mergeStrategy,
 }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
@@ -70,7 +71,11 @@ export default function Map({
 
     const cellSize = currentZoom <= 10 ? 100 : currentZoom <= 12 ? 60 : 30;
 
-    const clusters = clusterByDistance(
+    if (!mergeStrategy) {
+      return;
+    }
+
+    const clusters = mergeStrategy(
       FAVORITE_LOCATIONS,
       currentZoom,
       cellSize,
@@ -174,7 +179,7 @@ export default function Map({
         markersLayerRef.current = null;
       }
     };
-  }, [center, zoom, width, height]);
+  }, [center, zoom, width, height, mergeStrategy]);
 
   return (
     <div
