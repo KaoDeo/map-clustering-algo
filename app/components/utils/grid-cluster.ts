@@ -4,6 +4,7 @@ export function gridCluster(
   markers: Marker[],
   zoom: number,
   size = 60,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   map: any
 ): Cluster[] {
   const cellMap = new Map<string, Cluster>();

@@ -6,6 +6,7 @@ export function hierarchicalCluster(
   markers: Marker[],
   zoom: number,
   distanceThreshold: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   map: any
 ): Cluster[] {
   const clusters = clusterByDistance(markers, zoom, distanceThreshold, map);

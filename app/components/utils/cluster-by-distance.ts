@@ -5,6 +5,7 @@ export function clusterByDistance(
   markers: Marker[],
   zoom: number,
   distanceThreshold = 5,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   map: any
 ): Cluster[] {
   const clusters: Cluster[] = [];

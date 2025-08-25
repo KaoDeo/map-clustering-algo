@@ -15,6 +15,7 @@ export const getCentroid = (markers: Marker[]) => {
 export const projectLatLngToPixelPositions = (
   lat: number,
   lng: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   map: any
 ): { x: number; y: number } => {
   const point = map.latLngToLayerPoint(map.latLng(lat, lng));
