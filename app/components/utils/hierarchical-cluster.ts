@@ -1,33 +1,53 @@
 import { Cluster, Marker } from "../types";
-import { clusterByDistance } from "./cluster-by-distance";
+import { getCentroid } from "./utils";
 
-// TODO: some items should be treated as clusters, some as markers
 export function hierarchicalCluster(
   markers: Marker[],
   zoom: number,
   distanceThreshold: number,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   map: any
-): Cluster[] {
-  const clusters = clusterByDistance(markers, zoom, distanceThreshold, map);
+) {
+  const clusters: Cluster[] = [];
 
-  const centroids = clusters.map((c) => ({
-    marker: { lat: c.centroid.lat, lng: c.centroid.lng },
+  const points = markers.map((m) => ({
+    marker: m,
+    point: map.project([m.lat, m.lng], zoom),
+    clustered: false,
   }));
 
-  const nextClusters = clusterByDistance(
-    centroids.map((c) => c.marker),
-    zoom,
-    distanceThreshold * 1.5,
-    map
-  );
+  for (let i = 0; i < points.length; i++) {
+    if (points[i].clustered) continue;
 
-  return clusters.length === nextClusters.length
-    ? clusters
-    : hierarchicalCluster(
-        centroids.map((c) => c.marker),
-        zoom,
-        distanceThreshold * 1.5,
-        map
-      );
+    const cluster: Cluster = {
+      x: points[i].point.x,
+      y: points[i].point.y,
+      markers: [points[i].marker],
+      centroid: { lat: points[i].marker.lat, lng: points[i].marker.lng },
+    };
+    points[i].clustered = true;
+
+    for (let j = i + 1; j < points.length; j++) {
+      if (points[j].clustered) continue;
+
+      const dx = cluster.x - points[j].point.x;
+      const dy = cluster.y - points[j].point.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (dist < distanceThreshold) {
+        cluster.markers.push(points[j].marker);
+        points[j].clustered = true;
+        const centroid = getCentroid(cluster.markers);
+        const centroidPoint = map.project([centroid.lat, centroid.lng], zoom);
+        cluster.x = centroidPoint.x;
+        cluster.y = centroidPoint.y;
+      }
+    }
+
+    cluster.centroid = getCentroid(cluster.markers);
+    clusters.push(cluster);
+  }
+
+  console.log(clusters);
+  return clusters;
 }

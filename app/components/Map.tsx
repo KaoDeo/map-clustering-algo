@@ -2,10 +2,10 @@
 
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { FAVORITE_LOCATIONS } from "./favourite-locations";
-import { MapProps, mergeStrategies } from "./types";
-import { clusterByDistance } from "./utils";
+import { MapProps } from "./types";
+import { clusterByDistance, hierarchicalCluster } from "./utils";
 
 delete (
   L.Icon.Default.prototype as typeof L.Icon.Default.prototype & {
@@ -26,13 +26,12 @@ export default function Map({
   height = "400px",
   center = [40.7128, -74.006], // NYC coordinates as default
   zoom = 13,
-  mergeStrategy,
 }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
 
-  const createIcon = (count: number) => {
+  const createIcon = useCallback((count: number) => {
     const isCluster = count > 1;
     const size = isCluster ? Math.min(40 + Math.log(count) * 5, 60) : 30;
 
@@ -61,8 +60,9 @@ export default function Map({
       iconAnchor: [size / 2, size / 2],
       popupAnchor: [0, -size / 2],
     });
-  };
-  const updateMarkers = () => {
+  }, []);
+
+  const updateMarkers = useCallback(() => {
     if (!leafletMapRef.current || !markersLayerRef.current) return;
 
     const currentZoom = leafletMapRef.current.getZoom();
@@ -71,11 +71,7 @@ export default function Map({
 
     const cellSize = currentZoom <= 10 ? 100 : currentZoom <= 12 ? 60 : 30;
 
-    if (!mergeStrategy) {
-      return;
-    }
-
-    const clusters = mergeStrategy(
+    const clusters = hierarchicalCluster(
       FAVORITE_LOCATIONS,
       currentZoom,
       cellSize,
@@ -132,7 +128,7 @@ export default function Map({
         .addTo(markersLayerRef.current!)
         .bindPopup(popupContent);
     });
-  };
+  }, [createIcon]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!mapRef || !mapRef.current) return;
@@ -146,24 +142,24 @@ export default function Map({
 
     markersLayerRef.current = L.layerGroup().addTo(leafletMapRef.current);
 
-    L.marker(center)
-      .addTo(leafletMapRef.current)
-      .bindPopup(
-        `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
-            🗽 Welcome to NYC!
-          </h3>
-          <p style="margin: 0; font-size: 14px; color: #4b5563;">
-            Click the markers to explore favorite places around the city!
-          </p>
-          <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
-            Zoom in and out to see clustering in action
-          </p>
-        </div>
-      `
-      )
-      .openPopup();
+    // L.marker(center)
+    //   .addTo(leafletMapRef.current)
+    //   .bindPopup(
+    //     `
+    //     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    //       <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: #1f2937;">
+    //         🗽 Welcome to NYC!
+    //       </h3>
+    //       <p style="margin: 0; font-size: 14px; color: #4b5563;">
+    //         Click the markers to explore favorite places around the city!
+    //       </p>
+    //       <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">
+    //         Zoom in and out to see clustering in action
+    //       </p>
+    //     </div>
+    //   `
+    //   )
+    //   .openPopup();
 
     updateMarkers();
 
@@ -179,7 +175,7 @@ export default function Map({
         markersLayerRef.current = null;
       }
     };
-  }, [center, zoom, width, height, mergeStrategy]);
+  }, [center, zoom, width, height, updateMarkers]);
 
   return (
     <div

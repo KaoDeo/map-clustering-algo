@@ -1,7 +1,7 @@
-import { clusterByDistance, gridCluster } from "../utils";
+import { clusterByDistance, gridCluster, hierarchicalCluster } from "../utils";
 
 export const mergeStrategies = {
   distance: clusterByDistance,
   grid: gridCluster,
-  // hierarchical: hierarchicalCluster,
+  hierarchical: hierarchicalCluster,
 };

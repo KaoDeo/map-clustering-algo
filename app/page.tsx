@@ -114,7 +114,6 @@ export default function Home() {
               height="500px"
               center={[40.7128, -74.006]}
               zoom={12}
-              mergeStrategy={mergeStrategies.distance}
             />
           </div>
         </main>
