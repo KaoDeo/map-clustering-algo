@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { useCallback, useEffect, useRef } from "react";
 import { FAVORITE_LOCATIONS } from "./favourite-locations";
 import { MapProps } from "./types";
-import { clusterByDistance, hierarchicalCluster } from "./utils";
+import { hierarchicalCluster } from "./utils";
 
 delete (
   L.Icon.Default.prototype as typeof L.Icon.Default.prototype & {
@@ -33,26 +33,44 @@ export default function Map({
 
   const createIcon = useCallback((count: number) => {
     const isCluster = count > 1;
-    const size = isCluster ? Math.min(40 + Math.log(count) * 5, 60) : 30;
+    const size = isCluster ? Math.min(40 + Math.log(count) * 5, 60) : 35;
 
     return L.divIcon({
       html: `
         <div style="
-          background-color: ${isCluster ? "#3b82f6" : "#ef4444"};
-          border: 2px solid white;
+          background: ${
+            isCluster
+              ? `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`
+              : `linear-gradient(135deg, #f093fb 0%, #f5576c 100%)`
+          };
+          border: 3px solid rgba(255, 255, 255, 0.9);
           border-radius: 50%;
           width: ${size}px;
           height: ${size}px;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
+          backdrop-filter: blur(4px);
+          position: relative;
+          overflow: hidden;
         ">
+          <div style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.3), transparent 60%);
+          "></div>
           <span style="
             color: white;
-            font-size: ${isCluster ? Math.min(14 + Math.log(count), 16) : 16}px;
+            font-size: ${isCluster ? Math.min(14 + Math.log(count), 16) : 18}px;
             font-weight: bold;
-          ">${isCluster ? count : "⭐"}</span>
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            position: relative;
+            z-index: 1;
+          ">${isCluster ? count : "✨"}</span>
         </div>
       `,
       className: isCluster ? "custom-cluster-icon" : "custom-favorite-icon",
@@ -128,17 +146,34 @@ export default function Map({
         .addTo(markersLayerRef.current!)
         .bindPopup(popupContent);
     });
-  }, [createIcon]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [createIcon]);
 
   useEffect(() => {
     if (!mapRef || !mapRef.current) return;
 
     leafletMapRef.current = L.map(mapRef.current).setView(center, zoom);
 
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution:
-        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(leafletMapRef.current);
+    // Beautiful watercolor map style
+    L.tileLayer(
+      "https://watercolormaps.collection.cooperhewitt.org/tile/watercolor/{z}/{x}/{y}.jpg",
+      {
+        attribution:
+          'Map tiles by <a href="http://maps.stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.',
+        maxZoom: 18,
+      }
+    ).addTo(leafletMapRef.current);
+
+    // Add a subtle overlay for enhanced aesthetics
+    L.tileLayer(
+      "https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_only_labels/{z}/{x}/{y}.png",
+      {
+        attribution:
+          '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="http://carto.com/attributions">CARTO</a>',
+        subdomains: "abcd",
+        maxZoom: 18,
+        opacity: 0.7,
+      }
+    ).addTo(leafletMapRef.current);
 
     markersLayerRef.current = L.layerGroup().addTo(leafletMapRef.current);
 
@@ -181,7 +216,7 @@ export default function Map({
     <div
       ref={mapRef}
       style={{ width, height }}
-      className="rounded-lg border border-gray-300 shadow-lg"
+      className="rounded-xl border border-gray-200 shadow-2xl overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50"
     />
   );
 }

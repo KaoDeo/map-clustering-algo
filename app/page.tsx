@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { mergeStrategies } from "./components/types";
 
 const MyAwesomeMap = dynamic(() => import("./components/Map"), {
   ssr: false,
@@ -55,58 +54,17 @@ export default function Home() {
           {/* Supported Algorithms Section */}
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
             <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
-              Supported Clustering Algorithms
+              Hierarchical Clustering Algorithms
             </h2>
-            <div className="grid gap-6 md:grid-cols-3">
-              <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
-                  <span className="w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
-                  Distance-Based
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                  Groups markers based on proximity using configurable distance
-                  thresholds
-                </p>
-                <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                  <li>• Euclidean distance calculation</li>
-                  <li>• Adjustable threshold parameter</li>
-                  <li>• Works with projected coordinates</li>
-                </ul>
-              </div>
-
-              <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
-                  <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
-                  Grid-Based
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                  Divides the map into uniform grid cells and groups markers
-                  within each cell
-                </p>
-                <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                  <li>• Fixed grid cell size</li>
-                  <li>• Consistent clustering results</li>
-                  <li>• Efficient for large datasets</li>
-                </ul>
-              </div>
-
-              <div className="p-4 border border-gray-200 dark:border-gray-600 rounded-lg opacity-60">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 flex items-center">
-                  <span className="w-3 h-3 bg-purple-500 rounded-full mr-2"></span>
-                  Hierarchical
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-                  Multi-level clustering using recursive distance-based grouping
-                </p>
-                <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
-                  <li>• Recursive clustering approach</li>
-                  <li>• Variable distance thresholds</li>
-                  <li>
-                    • <span className="italic">In development</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+            <p className="text-gray-600 dark:text-gray-400">
+              Hierarchical clustering is a clustering algorithm that uses
+              agglomeration for merging the items on the map. The item can be a
+              single marker or a cluster of markers.
+            </p>
+            <p className="text-gray-600 dark:text-gray-400">
+              A key is to use the centroid of the cluster to calculate the
+              distance between clusters.
+            </p>
           </div>
 
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
